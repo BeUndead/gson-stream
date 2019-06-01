@@ -8,15 +8,19 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
- * Implementation of {@link TypeAdapter} which handles <strong>lazily-loaded</strong> {@link Stream Streams}.
+ * Implementation of {@link TypeAdapter} which handles <strong>lazily-loaded</strong>
+ * {@link Stream Streams}.
  *
- * @param <T> the <strong>element-type</strong> of the {@code Stream} that this {@code TypeAdapter} is for
+ * @param <T> the <strong>element-type</strong> of the {@code Stream} that this {@code TypeAdapter}
+ *            is for
  */
+@ThreadSafe
 public final class StreamTypeAdapter<T> extends TypeAdapter<Stream<T>> {
 
     /**
@@ -93,19 +97,20 @@ public final class StreamTypeAdapter<T> extends TypeAdapter<Stream<T>> {
     /**
      * {@inheritDoc}
      * <p>
-     * Implementation generates a {@link Stream} where the elements are lazily loaded by reading from the provided
-     * {@link JsonReader} when they are requested.
+     * Implementation generates a {@link Stream} where the elements are lazily loaded by reading
+     * from the provided {@link JsonReader} when they are requested.
      */
     @Override
     public @Nullable Stream<T> read(final JsonReader in) throws IOException {
 
         try {
-            // Use beginArray BEFORE giving to JsonReaderSkippableIterator to optimise for expected use-case
-            // of non-null arrays.
+            // Use beginArray BEFORE giving to JsonReaderSkippableIterator to optimise for expected
+            // use-case of non-null arrays.
             in.beginArray();
         } catch (final IllegalStateException iSEx) {
 
-            // An IllegalStateException here will intentionally propagate out
+            // An IllegalStateException here will intentionally propagate out, as the json element
+            // is not a json array OR null.
             in.nextNull();
             return null;
         }
@@ -118,27 +123,28 @@ public final class StreamTypeAdapter<T> extends TypeAdapter<Stream<T>> {
     // Internal
     // ========
 
-
     /**
-     * Extension of {@link RuntimeException} which allows us to re-throw an {@link Exception} without modification
-     * or risk on pollution when defining a lambda which does <strong>not</strong> have such {@code Exceptions} in its
-     * signature.
+     * Extension of {@link RuntimeException} which allows us to re-throw an {@link Exception}
+     * without modification or risk on pollution when defining a lambda which does
+     * <strong>not</strong> have such {@code Exceptions} in its signature.
      * <p>
-     * Instances of this {@code RuntimeException} are <strong>never</strong> expected to be thrown by {@code public}
-     * methods of this class (without being handled).
+     * Instances of this {@code RuntimeException} are <strong>never</strong> expected to be thrown
+     * by {@code public} methods of this class (without being handled).
      */
     private static class LocalStreamingException extends RuntimeException {
 
         /**
-         * The {@link IOException} which was the <strong>cause</strong> of this {@link LocalStreamingException}.
+         * The {@link IOException} which was the <strong>cause</strong> of this {@link
+         * LocalStreamingException}.
          */
         private final IOException ioException;
 
         /**
-         * Constructor; generates a new {@link LocalStreamingException} with the provided {@link IOException} as its
-         * {@link #getCause() cause}.
+         * Constructor; generates a new {@link LocalStreamingException} with the provided {@link
+         * IOException} as its {@link #getCause() cause}.
          *
-         * @param ioException the {@code IOException} which caused this {@code LocalStreamingException}
+         * @param ioException the {@code IOException} which caused this {@code
+         *                    LocalStreamingException}
          */
         private LocalStreamingException(final IOException ioException) {
             super(null, ioException, false, false); // Suppress stack trace creation...  It won't be used.

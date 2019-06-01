@@ -1,5 +1,6 @@
 package com.com.collections;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -11,11 +12,27 @@ import java.util.function.Consumer;
  *
  * @param <T> {@inheritDoc}
  */
+@NotThreadSafe
 final class SkippingDelegatingSkippableIterator<T> implements SkippableIterator<T> {
 
+    /**
+     * The {@link SkippableIterator} which this {@link SkippingDelegatingSkippableIterator}
+     * delegates to.
+     */
     private final SkippableIterator<T> delegate;
+    /**
+     * The remaining number of elements to {@link #skip()}.
+     */
     private long toSkip;
 
+    /**
+     * Constructor; generates a new {@link SkippingDelegatingSkippableIterator} which will
+     * {@link SkippableIterator#skip()} {@code toSkip} elements of the provided {@link
+     * SkippableIterator iterator} whenever an invocation occurs.
+     *
+     * @param iterator the {@code SkippableIterator} to delegate to
+     * @param toSkip   the number of elements to {@code skip}
+     */
     SkippingDelegatingSkippableIterator(final SkippableIterator<T> iterator,
                                         final long toSkip) {
         this.delegate = Objects.requireNonNull(iterator, "'iterator' must not be 'null'");

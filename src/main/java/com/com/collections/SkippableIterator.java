@@ -32,7 +32,8 @@ public interface SkippableIterator<T> extends Iterator<T>, Closeable {
     /**
      * {@inheritDoc}
      * <p>
-     * Implementation {@link #skip() skips} any remaining elements in the {@link SkippableIterator}.
+     * Default mplementation {@link #skip() skips} any remaining elements in the
+     * {@link SkippableIterator}.
      */
     @Override
     default void close() {

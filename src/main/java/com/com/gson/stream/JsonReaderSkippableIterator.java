@@ -4,28 +4,38 @@ import com.com.collections.SkippableIterator;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- * Implementation of {@link Iterator} which locates and continuously {@link
+ * Implementation of {@link SkippableIterator} which locates and continuously {@link
  * TypeAdapter#fromJson(Reader) reads} the elements of the {@link JsonReader} using the constructed
  * {@link #componentAdapter} and converts the elements to a lazily loaded {@code Iterator}.
  * <p>
  * An instance of this class is single use; it is up to the user to determine what to do with the
  * resulting elements.
  */
+@NotThreadSafe
 final class JsonReaderSkippableIterator<T> implements SkippableIterator<T> {
 
-    private TypeAdapter<T> componentAdapter;
+    /**
+     * The {@link TypeAdapter} to use for individual elements of the {@link Iterator}.
+     */
+    private final TypeAdapter<T> componentAdapter;
     /**
      * The {@link JsonReader} containing the elements this {@link Iterator} should iterate over.
      */
     private final JsonReader reader;
-
-    private Boolean lastHasNextResult = null;
+    /**
+     * Tracks what the last invocation of {@link #hasNext()} returned.  If this has not been invoked
+     * since construction, or since the next element has been <strong>consumed</strong> (either by
+     * an invocation of {@link #next()} or {@link #skip()}) then this will be {@code null}.
+     */
+    private @Nullable Boolean lastHasNextResult = null;
 
     /**
      * Constructor; generates a new {@link JsonReaderSkippableIterator} using the provided {@link
@@ -96,6 +106,7 @@ final class JsonReaderSkippableIterator<T> implements SkippableIterator<T> {
         if (this.hasNext()) {
             try {
                 this.lastHasNextResult = null;
+                System.out.println("Skipping");
                 this.reader.skipValue();
                 return;
             } catch (final IOException ioEx) {

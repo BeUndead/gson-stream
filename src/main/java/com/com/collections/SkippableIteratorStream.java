@@ -1,5 +1,6 @@
 package com.com.collections;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Objects;
@@ -29,11 +30,27 @@ import java.util.stream.StreamSupport;
  *
  * @param <T> {@inheritDoc}
  */
-public class SkippableIteratorStream<T> implements Stream<T> {
+@NotThreadSafe
+public final class SkippableIteratorStream<T> implements Stream<T> {
 
+    /**
+     * The underlying {@link SkippableIterator} which this {@link SkippableIteratorStream} is to
+     * stream over.
+     */
     private final SkippableIterator<T> iterator;
+    /**
+     * A delegate {@link Stream} providing the base functionality of this {@link
+     * SkippableIteratorStream}.
+     */
     private final Stream<T> stream;
 
+    /**
+     * Constructor; generates a new {@link SkippableIteratorStream} which will stream over the
+     * provided {@link SkippableIterator iterator}.
+     *
+     * @param iterator the {@code SkippableIterator} that this {@code SkippableIteratorStream} is
+     *                 to stream over
+     */
     public SkippableIteratorStream(final SkippableIterator<T> iterator) {
         this.iterator = Objects.requireNonNull(iterator, "'iterator' must not be 'null'");
 
@@ -44,6 +61,26 @@ public class SkippableIteratorStream<T> implements Stream<T> {
         this.stream.onClose(this::closeIterator);
     }
 
+
+    // =====================
+    // Stream implementation
+    // =====================
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Implementation uses a {@link SkippingDelegatingSkippableIterator} in order to delay the
+     * {@link SkippableIterator#skip() skipping} until necessary as part of the pipeline.
+     */
+    @Override
+    public Stream<T> skip(final long n) {
+        return new SkippableIteratorStream<>(new SkippingDelegatingSkippableIterator<>(this.iterator, n));
+    }
+
+
+    // =================
+    // Stream delegation
+    // =================
 
     @Override
     public Stream<T> filter(final Predicate<? super T> predicate) {
@@ -110,11 +147,6 @@ public class SkippableIteratorStream<T> implements Stream<T> {
 
     @Override
     public Stream<T> limit(final long maxSize) {return this.stream.limit(maxSize);}
-
-    @Override
-    public Stream<T> skip(final long n) {
-        return new SkippableIteratorStream<>(new SkippingDelegatingSkippableIterator<>(this.iterator, n));
-    }
 
     @Override
     public void forEach(final Consumer<? super T> action) {this.stream.forEach(action);}
